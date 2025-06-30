@@ -1,0 +1,9 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head><title>天気結果</title></head>
+<body>
+<h2>天気結果</h2>//天気予報の結果画面
+<p th:text="'選択した都道府県の天気：' + ${weather}"></p>
+<a href="/select">戻る</a>
+</body>
+</html>
