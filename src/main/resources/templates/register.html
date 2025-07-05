@@ -2,16 +2,16 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8" />
-    <title>ログイン</title>
+    <title>ユーザー登録</title>
 </head>
 <body>
-<h2>ログイン</h2>
-<form method="post" action="/login">
+<h2>ユーザー登録</h2>
+<form method="post" action="/register">
     <input type="text" name="username" placeholder="ユーザー名" required />
     <input type="password" name="password" placeholder="パスワード" required />
-    <button type="submit">ログイン</button>
+    <button type="submit">登録</button>
 </form>
 <p th:text="${error}" style="color:red;"></p>
-<p><a href="/register">新規登録はこちら</a></p>
+<p><a href="/login">ログインはこちら</a></p>
 </body>
 </html>
