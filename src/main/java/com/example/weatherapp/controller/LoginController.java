@@ -30,7 +30,7 @@ public class LoginController {
                         Model model) {
         User user = userRepository.findByUsername(username);
         if (user != null && user.getPassword().equals(password)) {
-            session.setAttribute("username", username);
+            session.setAttribute("userId", user.getId());  // ← userIdをセッションに保存
             return "redirect:/weather";
         } else {
             model.addAttribute("error", "ユーザー名またはパスワードが違います");

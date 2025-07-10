@@ -25,22 +25,27 @@ public class WeatherController {
         this.userRepository = userRepository;
     }
 
+    // セッションからログインユーザーを取得（共通メソッド）
+    private User getLoggedInUser(HttpSession session) {
+        Long userId = (Long) session.getAttribute("userId");
+        if (userId == null) return null;
+        return userRepository.findById(userId).orElse(null);
+    }
+
     @GetMapping("/select-prefecture")
-    public String selectPrefecture(Model model) {
+    public String selectPrefecture(Model model, HttpSession session) {
+        User user = getLoggedInUser(session);
+        if (user == null) return "redirect:/login";
+
         model.addAttribute("prefectures", Prefecture.values());
         return "select-prefecture";
     }
 
     @PostMapping("/select-prefecture")
     public String handleSelectPrefecture(@RequestParam String prefecture, HttpSession session) {
-        String username = (String) session.getAttribute("username");
-        if (username == null) {
-            return "redirect:/login";
-        }
-        User user = userRepository.findByUsername(username);
-        if (user == null) {
-            return "redirect:/login";
-        }
+        User user = getLoggedInUser(session);
+        if (user == null) return "redirect:/login";
+
         user.setSelectedPrefecture(Prefecture.valueOf(prefecture));
         userRepository.save(user);
         return "redirect:/weather";
@@ -48,18 +53,11 @@ public class WeatherController {
 
     @GetMapping("/weather")
     public String showWeather(Model model, HttpSession session) {
-        String username = (String) session.getAttribute("username");
-        if (username == null) {
-            return "redirect:/login";
-        }
-        User user = userRepository.findByUsername(username);
-        if (user == null) {
-            return "redirect:/login";
-        }
+        User user = getLoggedInUser(session);
+        if (user == null) return "redirect:/login";
+
         Prefecture pref = user.getSelectedPrefecture();
-        if (pref == null) {
-            return "redirect:/select-prefecture";
-        }
+        if (pref == null) return "redirect:/select-prefecture";
 
         String url = "https://api.openweathermap.org/data/2.5/weather?q=" + pref + ",JP&appid=" + apiKey + "&units=metric&lang=ja";
 
