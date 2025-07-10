@@ -41,7 +41,7 @@ public class WeatherController {
         return "select-prefecture";
     }
 
-    @PostMapping("/select-prefecture")
+    @PostMapping("/weather")
     public String handleSelectPrefecture(@RequestParam String prefecture, HttpSession session) {
         User user = getLoggedInUser(session);
         if (user == null) return "redirect:/login";

@@ -43,7 +43,7 @@ public class LoginController {
         return "register";
     }
 
-    @PostMapping("/register")
+    @PostMapping("/api/login")
     public String register(@RequestParam String username,
                            @RequestParam String password,
                            Model model) {
