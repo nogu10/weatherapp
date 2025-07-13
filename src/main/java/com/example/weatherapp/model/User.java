@@ -18,6 +18,7 @@ public class User {
 
     private String password;
 
-    @Enumerated(EnumType.STRING)
+    @Convert(converter = PrefectureConverter.class)
     private Prefecture selectedPrefecture;
 }
+

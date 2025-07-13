@@ -1,16 +1,21 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
-    <meta charset="UTF-8" />
+    <meta charset="UTF-8">
     <title>都道府県選択</title>
 </head>
 <body>
-<h2>都道府県を選択してください</h2>
-<form method="post" action="/select-prefecture">
-    <select name="prefecture" required>
-        <option th:each="p : ${prefectures}" th:value="${p}" th:text="${p}"></option>
-    </select>
-    <button type="submit">決定</button>
-</form>
+    <h2>都道府県を選択してください</h2>
+    
+    <form method="post" action="/select-prefecture">
+        <select name="prefectureCode" required>
+            <option value="" disabled selected>選択してください</option>
+            <th:block th:each="pref : ${prefectures}">
+                <option th:value="${pref.code}" th:text="${pref.label}"></option>
+            </th:block>
+        </select>
+        <br><br>
+        <button type="submit">決定</button>
+    </form>
 </body>
 </html>

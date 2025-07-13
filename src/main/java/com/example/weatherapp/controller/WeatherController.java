@@ -7,10 +7,11 @@ import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestTemplate;
+
+import java.util.Map;
+import java.util.Optional;
 
 @Controller
 public class WeatherController {
@@ -25,45 +26,64 @@ public class WeatherController {
         this.userRepository = userRepository;
     }
 
-    // セッションからログインユーザーを取得（共通メソッド）
-    private User getLoggedInUser(HttpSession session) {
-        Long userId = (Long) session.getAttribute("userId");
-        if (userId == null) return null;
-        return userRepository.findById(userId).orElse(null);
-    }
-
     @GetMapping("/select-prefecture")
-    public String selectPrefecture(Model model, HttpSession session) {
-        User user = getLoggedInUser(session);
-        if (user == null) return "redirect:/login";
+    public String showPrefectureForm(Model model, HttpSession session) {
+        Long userId = (Long) session.getAttribute("userId");
+        if (userId == null) {
+            return "redirect:/login";
+        }
 
         model.addAttribute("prefectures", Prefecture.values());
-        return "select-prefecture";
+        return "select_prefecture";
     }
 
-    @PostMapping("/weather")
-    public String handleSelectPrefecture(@RequestParam String prefecture, HttpSession session) {
-        User user = getLoggedInUser(session);
-        if (user == null) return "redirect:/login";
-
-        user.setSelectedPrefecture(Prefecture.valueOf(prefecture));
-        userRepository.save(user);
+    @PostMapping("/prefecture")
+    public String handleSelectPrefecture(@RequestParam int prefectureCode, HttpSession session) {
+        Long userId = (Long) session.getAttribute("userId");
+        if (userId != null) {
+            Optional<User> optionalUser = userRepository.findById(userId);
+            if (optionalUser.isPresent()) {
+                User user = optionalUser.get();
+                Prefecture selected = Prefecture.fromCode(prefectureCode); // ← コードからEnum変換
+                user.setSelectedPrefecture(selected);
+                userRepository.save(user);
+            }
+        }
         return "redirect:/weather";
     }
 
-    @GetMapping("/weather")
+    @GetMapping("/dashboard")
     public String showWeather(Model model, HttpSession session) {
-        User user = getLoggedInUser(session);
-        if (user == null) return "redirect:/login";
+        Long userId = (Long) session.getAttribute("userId");
+        if (userId == null) {
+            return "redirect:/login";
+        }
 
-        Prefecture pref = user.getSelectedPrefecture();
-        if (pref == null) return "redirect:/select-prefecture";
+        Optional<User> optionalUser = userRepository.findById(userId);
+        if (optionalUser.isPresent()) {
+            User user = optionalUser.get();
+            Prefecture selected = user.getSelectedPrefecture();
 
-        String url = "https://api.openweathermap.org/data/2.5/weather?q=" + pref + ",JP&appid=" + apiKey + "&units=metric&lang=ja";
+            if (selected == null) {
+                return "redirect:/select-prefecture";
+            }
 
-        String weatherJson = restTemplate.getForObject(url, String.class);
-        model.addAttribute("weatherJson", weatherJson);
-        model.addAttribute("prefecture", pref);
-        return "weather";
+            String prefectureName = selected.getLabel(); // ← 「東京」など
+            String url = "https://api.openweathermap.org/data/2.5/weather?q=" +
+                    prefectureName + ",JP&appid=" + apiKey + "&units=metric&lang=ja";
+
+            try {
+                Map<String, Object> weatherData = restTemplate.getForObject(url, Map.class);
+                model.addAttribute("user", user);
+                model.addAttribute("prefecture", prefectureName);
+                model.addAttribute("weather", weatherData);
+                return "weather";
+            } catch (Exception e) {
+                model.addAttribute("error", "天気情報の取得に失敗しました");
+            }
+        }
+
+        return "redirect:/login";
     }
 }
+
