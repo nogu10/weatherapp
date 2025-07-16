@@ -18,11 +18,13 @@ public class LoginController {
         this.userRepository = userRepository;
     }
 
+    // ログインフォーム表示
     @GetMapping("/login")
     public String loginForm() {
         return "login";
     }
 
+    // ログイン処理
     @PostMapping("/login")
     public String login(@RequestParam String username,
                         @RequestParam String password,
@@ -30,19 +32,21 @@ public class LoginController {
                         Model model) {
         User user = userRepository.findByUsername(username);
         if (user != null && user.getPassword().equals(password)) {
-            session.setAttribute("userId", user.getId());  // ← userIdをセッションに保存
-            return "redirect:/weather";
+            session.setAttribute("userId", user.getId());
+            return "redirect:/dashboard";  // weather → dashboard に合わせました
         } else {
             model.addAttribute("error", "ユーザー名またはパスワードが違います");
             return "login";
         }
     }
 
+    // ユーザー登録フォーム表示
     @GetMapping("/register")
     public String showRegisterForm() {
         return "register";
     }
 
+    // ユーザー登録処理
     @PostMapping("/user")
     public String register(@RequestParam String username,
                            @RequestParam String password,
@@ -55,6 +59,13 @@ public class LoginController {
         user.setUsername(username);
         user.setPassword(password);
         userRepository.save(user);
+        return "redirect:/login";
+    }
+
+    // ✅ ログアウト処理
+    @GetMapping("/logout")
+    public String logout(HttpSession session) {
+        session.invalidate(); // セッション破棄
         return "redirect:/login";
     }
 }

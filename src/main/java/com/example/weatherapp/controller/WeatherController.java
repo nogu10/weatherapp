@@ -1,6 +1,7 @@
 package com.example.weatherapp.controller;
 
 import com.example.weatherapp.model.Prefecture;
+import com.example.weatherapp.model.PrefectureUpdateRequest;
 import com.example.weatherapp.model.User;
 import com.example.weatherapp.repository.UserRepository;
 import jakarta.servlet.http.HttpSession;
@@ -26,6 +27,7 @@ public class WeatherController {
         this.userRepository = userRepository;
     }
 
+    // 都道府県選択画面の表示
     @GetMapping("/select-prefecture")
     public String showPrefectureForm(Model model, HttpSession session) {
         Long userId = (Long) session.getAttribute("userId");
@@ -37,6 +39,7 @@ public class WeatherController {
         return "select_prefecture";
     }
 
+    // 都道府県選択処理（画面からPOST）
     @PostMapping("/prefecture")
     public String handleSelectPrefecture(@RequestParam int prefectureCode, HttpSession session) {
         Long userId = (Long) session.getAttribute("userId");
@@ -44,14 +47,15 @@ public class WeatherController {
             Optional<User> optionalUser = userRepository.findById(userId);
             if (optionalUser.isPresent()) {
                 User user = optionalUser.get();
-                Prefecture selected = Prefecture.fromCode(prefectureCode); // ← コードからEnum変換
+                Prefecture selected = Prefecture.fromCode(prefectureCode); // コードからEnum変換
                 user.setSelectedPrefecture(selected);
                 userRepository.save(user);
             }
         }
-        return "redirect:/weather";
+        return "redirect:/dashboard";
     }
 
+    // 天気情報表示
     @GetMapping("/dashboard")
     public String showWeather(Model model, HttpSession session) {
         Long userId = (Long) session.getAttribute("userId");
@@ -68,7 +72,7 @@ public class WeatherController {
                 return "redirect:/select-prefecture";
             }
 
-            String prefectureName = selected.getLabel(); // ← 「東京」など
+            String prefectureName = selected.getLabel(); // 例：「東京」
             String url = "https://api.openweathermap.org/data/2.5/weather?q=" +
                     prefectureName + ",JP&appid=" + apiKey + "&units=metric&lang=ja";
 
@@ -85,5 +89,20 @@ public class WeatherController {
 
         return "redirect:/login";
     }
-}
 
+    // ✅ 都道府県の更新処理（PUTリクエスト、JSON形式）
+    @PutMapping("/user/prefecture")
+    @ResponseBody
+    public String updateUserPrefecture(@RequestBody PrefectureUpdateRequest request) {
+        Optional<User> optionalUser = userRepository.findById(request.getUserId());
+        if (optionalUser.isPresent()) {
+            User user = optionalUser.get();
+            Prefecture prefecture = Prefecture.fromCode(request.getPrefectureCode());
+            user.setSelectedPrefecture(prefecture);
+            userRepository.save(user);
+            return "都道府県を更新しました";
+        } else {
+            return "ユーザーが見つかりません";
+        }
+    }
+}
