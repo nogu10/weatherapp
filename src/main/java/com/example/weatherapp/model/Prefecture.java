@@ -1,5 +1,9 @@
 package com.example.weatherapp.model;
 
+/**
+ * 日本の都道府県を表す列挙型。
+ * 各都道府県には一意のコードとラベル（日本語名）が割り当てられています。
+ */
 public enum Prefecture {
     HOKKAIDO(1, "北海道"),
     AOMORI(2, "青森"),
@@ -49,23 +53,48 @@ public enum Prefecture {
     KAGOSHIMA(46, "鹿児島"),
     OKINAWA(47, "沖縄");
 
+    /** 都道府県コード（1〜47） */
     private final int code;
+
+    /** 都道府県の日本語名 */
     private final String label;
 
+    /**
+     * コンストラクタ
+     *
+     * @param code  都道府県コード
+     * @param label 都道府県名（日本語）
+     */
     Prefecture(int code, String label) {
         this.code = code;
         this.label = label;
     }
 
+    /**
+     * 都道府県コードを返します。
+     *
+     * @return 都道府県コード
+     */
     public int getCode() {
         return code;
     }
 
+    /**
+     * 都道府県の日本語名を返します。
+     *
+     * @return 都道府県ラベル
+     */
     public String getLabel() {
         return label;
     }
 
-    // コードからEnumを取得
+    /**
+     * 指定されたコードに対応する {@link Prefecture} を返します。
+     *
+     * @param code 都道府県コード
+     * @return 対応する {@link Prefecture}
+     * @throws IllegalArgumentException コードが無効な場合
+     */
     public static Prefecture fromCode(int code) {
         for (Prefecture p : Prefecture.values()) {
             if (p.code == code) {
@@ -75,7 +104,13 @@ public enum Prefecture {
         throw new IllegalArgumentException("Invalid prefecture code: " + code);
     }
 
-    // ラベルからEnumを取得（念のため）
+    /**
+     * 指定されたラベルに対応する {@link Prefecture} を返します。
+     *
+     * @param label 都道府県ラベル（日本語）
+     * @return 対応する {@link Prefecture}
+     * @throws IllegalArgumentException ラベルが無効な場合
+     */
     public static Prefecture fromLabel(String label) {
         for (Prefecture p : Prefecture.values()) {
             if (p.label.equals(label)) {

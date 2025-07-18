@@ -14,6 +14,9 @@ import org.springframework.web.client.RestTemplate;
 import java.util.Map;
 import java.util.Optional;
 
+/**
+ * 天気情報の表示や、ユーザーが選択した都道府県の管理を行うコントローラークラス。
+ */
 @Controller
 public class WeatherController {
 
@@ -23,11 +26,20 @@ public class WeatherController {
     @Value("${weather.api.key}")
     private String apiKey;
 
+    /**
+     * コンストラクタ。
+     * @param userRepository ユーザーリポジトリ
+     */
     public WeatherController(UserRepository userRepository) {
         this.userRepository = userRepository;
     }
 
-    // 都道府県選択画面の表示
+    /**
+     * 都道府県選択画面の表示。
+     * @param model モデル情報
+     * @param session セッション情報
+     * @return 都道府県選択画面テンプレート名
+     */
     @GetMapping("/select-prefecture")
     public String showPrefectureForm(Model model, HttpSession session) {
         Long userId = (Long) session.getAttribute("userId");
@@ -39,7 +51,12 @@ public class WeatherController {
         return "select_prefecture";
     }
 
-    // 都道府県選択処理（画面からPOST）
+    /**
+     * 都道府県選択処理（フォーム経由でPOSTされたデータを処理）。
+     * @param prefectureCode 選択された都道府県コード
+     * @param session セッション情報
+     * @return ダッシュボードへのリダイレクト
+     */
     @PostMapping("/prefecture")
     public String handleSelectPrefecture(@RequestParam int prefectureCode, HttpSession session) {
         Long userId = (Long) session.getAttribute("userId");
@@ -47,7 +64,7 @@ public class WeatherController {
             Optional<User> optionalUser = userRepository.findById(userId);
             if (optionalUser.isPresent()) {
                 User user = optionalUser.get();
-                Prefecture selected = Prefecture.fromCode(prefectureCode); // コードからEnum変換
+                Prefecture selected = Prefecture.fromCode(prefectureCode);
                 user.setSelectedPrefecture(selected);
                 userRepository.save(user);
             }
@@ -55,7 +72,14 @@ public class WeatherController {
         return "redirect:/dashboard";
     }
 
-    // 天気情報表示
+    /**
+     * 天気情報の表示処理。
+     * ユーザーが選択した都道府県に基づいて天気APIから情報を取得し、画面に表示する。
+     *
+     * @param model モデル情報
+     * @param session セッション情報
+     * @return 天気情報テンプレート名またはリダイレクト
+     */
     @GetMapping("/dashboard")
     public String showWeather(Model model, HttpSession session) {
         Long userId = (Long) session.getAttribute("userId");
@@ -72,7 +96,7 @@ public class WeatherController {
                 return "redirect:/select-prefecture";
             }
 
-            String prefectureName = selected.getLabel(); // 例：「東京」
+            String prefectureName = selected.getLabel();
             String url = "https://api.openweathermap.org/data/2.5/weather?q=" +
                     prefectureName + ",JP&appid=" + apiKey + "&units=metric&lang=ja";
 
@@ -90,8 +114,13 @@ public class WeatherController {
         return "redirect:/login";
     }
 
-    // ✅ 都道府県の更新処理（PUTリクエスト、JSON形式）
-    @PutMapping("/user/prefecture")
+    /**
+     * ユーザーの都道府県設定を更新する処理（API用、JSON経由）。
+     *
+     * @param request 都道府県更新リクエスト
+     * @return 結果メッセージ
+     */
+    @PutMapping("/prefecture")
     @ResponseBody
     public String updateUserPrefecture(@RequestBody PrefectureUpdateRequest request) {
         Optional<User> optionalUser = userRepository.findById(request.getUserId());
