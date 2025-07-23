@@ -1,63 +1,62 @@
 package com.example.weatherapp.controller;
 
 import com.example.weatherapp.model.User;
-import com.example.weatherapp.repository.UserRepository;
+import com.example.weatherapp.service.UserService;
 import jakarta.servlet.http.HttpSession;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
 /**
- * ログインやユーザー登録、ログアウトを扱うコントローラークラス。
+ * ログイン・ユーザー登録・ログアウトなど、
+ * セッションを利用した認証系の処理を担当するコントローラー。
  */
 @Controller
 public class LoginController {
 
-    private final UserRepository userRepository;
+    @Autowired
+    private UserService userService;
 
     /**
-     * コンストラクタ。
-     * @param userRepository ユーザー情報にアクセスするリポジトリ
-     */
-    public LoginController(UserRepository userRepository) {
-        this.userRepository = userRepository;
-    }
-
-    /**
-     * ログインフォームの表示。
-     * @return ログイン画面のテンプレート名
+     * ログインフォーム画面の表示
+     *
+     * @return login.html のビュー名
      */
     @GetMapping("/login")
-    public String loginForm() {
+    public String showLoginForm() {
         return "login";
     }
 
     /**
-     * ログイン処理を行う。
-     * @param username ユーザー名
-     * @param password パスワード
-     * @param session HTTPセッション
-     * @param model モデル情報
-     * @return ログイン成功時はダッシュボード、失敗時はログイン画面
+     * ログイン処理を実行し、成功すればセッションにユーザー情報を保存する
+     *
+     * @param username フォームから送信されたユーザー名
+     * @param password フォームから送信されたパスワード
+     * @param session  現在の HTTP セッション
+     * @param model    Thymeleaf に渡す Model オブジェクト
+     * @return 成功: dashboard.html にリダイレクト、失敗: login.html に戻る
      */
     @PostMapping("/login")
     public String login(@RequestParam String username,
                         @RequestParam String password,
                         HttpSession session,
                         Model model) {
-        User user = userRepository.findByUsername(username);
-        if (user != null && user.getPassword().equals(password)) {
+        User user = userService.login(username, password);
+        if (user != null) {
             session.setAttribute("userId", user.getId());
+            session.setAttribute("username", user.getUsername());
             return "redirect:/dashboard";
         } else {
-            model.addAttribute("error", "ユーザー名またはパスワードが違います");
+            model.addAttribute("error", "ユーザー名またはパスワードが正しくありません。");
             return "login";
         }
     }
 
     /**
-     * ユーザー登録フォームの表示。
-     * @return 登録画面のテンプレート名
+     * 新規登録フォーム画面の表示
+     *
+     * @return register.html のビュー名
      */
     @GetMapping("/register")
     public String showRegisterForm() {
@@ -65,31 +64,35 @@ public class LoginController {
     }
 
     /**
-     * 新規ユーザーを登録する。
-     * @param username 登録するユーザー名
-     * @param password 登録するパスワード
-     * @param model モデル情報
-     * @return 登録成功時はログイン画面、失敗時は登録画面
+     * ユーザー登録処理を実行し、登録が成功したらログイン状態にしてダッシュボードへ遷移
+     *
+     * @param username フォームから送信されたユーザー名
+     * @param password フォームから送信されたパスワード
+     * @param session  現在の HTTP セッション
+     * @param model    Thymeleaf に渡す Model オブジェクト
+     * @return 成功: dashboard にリダイレクト、失敗: register.html に戻る
      */
-    @PostMapping("/user")
+    @PostMapping("/register")
     public String register(@RequestParam String username,
                            @RequestParam String password,
+                           HttpSession session,
                            Model model) {
-        if (userRepository.findByUsername(username) != null) {
-            model.addAttribute("error", "このユーザー名は既に使われています");
+        try {
+            User user = userService.register(username, password);
+            session.setAttribute("userId", user.getId());
+            session.setAttribute("username", user.getUsername());
+            return "redirect:/dashboard";
+        } catch (IllegalArgumentException e) {
+            model.addAttribute("error", e.getMessage());
             return "register";
         }
-        User user = new User();
-        user.setUsername(username);
-        user.setPassword(password);
-        userRepository.save(user);
-        return "redirect:/login";
     }
 
     /**
-     * ログアウト処理を行う。
-     * @param session HTTPセッション
-     * @return ログイン画面にリダイレクト
+     * ログアウト処理。セッションを破棄し、ログイン画面へリダイレクトする
+     *
+     * @param session 現在の HTTP セッション
+     * @return login 画面へのリダイレクト
      */
     @GetMapping("/logout")
     public String logout(HttpSession session) {
@@ -97,4 +100,3 @@ public class LoginController {
         return "redirect:/login";
     }
 }
-
