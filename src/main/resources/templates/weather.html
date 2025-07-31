@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8" />
+    <title>天気情報</title>
+</head>
+<body>
+    <h2 th:text="'天気情報 - ' + ${prefecture}"></h2>
+
+    <div th:if="${weather != null}">
+        <p><strong>気温:</strong>
+            <span th:text="${weather['main']['temp']} + '℃'"></span>
+        </p>
+        <p><strong>天気:</strong>
+            <span th:text="${weather['weather'][0]['description']}"></span>
+        </p>
+        <p><strong>湿度:</strong>
+            <span th:text="${weather['main']['humidity']} + '%'"></span>
+        </p>
+        <p><strong>風速:</strong>
+            <span th:text="${weather['wind']['speed']} + ' m/s'"></span>
+        </p>
+    </div>
+
+    <div th:if="${weather == null}">
+        <p>天気情報を取得できませんでした。</p>
+    </div>
+
+    <hr>
+
+    <p><a href="/select-prefecture">都道府県を変更する</a></p>
+    <p><a href="/logout">ログアウト</a></p>
+</body>
+</html>
