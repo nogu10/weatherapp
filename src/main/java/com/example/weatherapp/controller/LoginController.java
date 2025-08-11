@@ -1,102 +1,79 @@
 package com.example.weatherapp.controller;
 
+import com.example.weatherapp.api.ApiResponse;
+import com.example.weatherapp.api.LoginRequest;
+import com.example.weatherapp.api.UserResponse;
 import com.example.weatherapp.model.User;
 import com.example.weatherapp.service.UserService;
 import jakarta.servlet.http.HttpSession;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 /**
- * ログイン・ユーザー登録・ログアウトなど、
- * セッションを利用した認証系の処理を担当するコントローラー。
+ * REST APIでのログイン認証を提供するコントローラークラス。
+ * <p>
+ * クライアントからのログインリクエストを受け取り、
+ * 認証成功時はセッションにユーザー情報を保存し、
+ * ユーザー情報を含むレスポンスを返します。
+ * 認証失敗やリクエスト不備の場合は適切なHTTPステータスを返します。
+ * </p>
  */
-@Controller
-public class LoginController {
-
-    @Autowired
-    private UserService userService;
+@RestController
+@RequestMapping("/login")
+public class LoginApiController {
 
     /**
-     * ログインフォーム画面の表示
-     *
-     * @return login.html のビュー名
+     * ユーザー認証を行うサービスクラスのインスタンス。
      */
-    @GetMapping("/login")
-    public String showLoginForm() {
-        return "login";
+    private final UserService userService;
+
+    /**
+     * コンストラクタによるUserServiceの注入。
+     *
+     * @param userService ユーザーサービス
+     */
+    public LoginApiController(UserService userService) {
+        this.userService = userService;
     }
 
     /**
-     * ログイン処理を実行し、成功すればセッションにユーザー情報を保存する
+     * ログイン処理用POSTエンドポイント。
+     * <p>
+     * リクエストボディのユーザー名・パスワードをチェックし、
+     * 認証に成功すればセッションにユーザーIDとユーザー名を保存して
+     * ユーザー情報をレスポンスとして返します。
+     * </p>
      *
-     * @param username フォームから送信されたユーザー名
-     * @param password フォームから送信されたパスワード
-     * @param session  現在の HTTP セッション
-     * @param model    Thymeleaf に渡す Model オブジェクト
-     * @return 成功: dashboard.html にリダイレクト、失敗: login.html に戻る
+     * @param request ログイン情報を保持するリクエストボディ
+     * @param session HTTPセッション（ユーザー情報保存用）
+     * @return 認証結果を含むAPIレスポンス。認証失敗時は401 Unauthorized、入力不備は400 Bad Requestを返す。
      */
-    @PostMapping("/login")
-    public String login(@RequestParam String username,
-                        @RequestParam String password,
-                        HttpSession session,
-                        Model model) {
-        User user = userService.login(username, password);
-        if (user != null) {
-            session.setAttribute("userId", user.getId());
-            session.setAttribute("username", user.getUsername());
-            return "redirect:/dashboard";
-        } else {
-            model.addAttribute("error", "ユーザー名またはパスワードが正しくありません。");
-            return "login";
+    @PostMapping
+    public ResponseEntity<ApiResponse<UserResponse>> login(@RequestBody LoginRequest request, HttpSession session) {
+        // 入力チェック：ユーザー名またはパスワードがnullなら400エラー
+        if (request.getUsername() == null || request.getPassword() == null) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(new ApiResponse<>("400 Bad Request", null));
         }
-    }
 
-    /**
-     * 新規登録フォーム画面の表示
-     *
-     * @return register.html のビュー名
-     */
-    @GetMapping("/register")
-    public String showRegisterForm() {
-        return "register";
-    }
+        // サービスを使って認証を実施
+        User user = userService.login(request.getUsername(), request.getPassword());
 
-    /**
-     * ユーザー登録処理を実行し、登録が成功したらログイン状態にしてダッシュボードへ遷移
-     *
-     * @param username フォームから送信されたユーザー名
-     * @param password フォームから送信されたパスワード
-     * @param session  現在の HTTP セッション
-     * @param model    Thymeleaf に渡す Model オブジェクト
-     * @return 成功: dashboard にリダイレクト、失敗: register.html に戻る
-     */
-    @PostMapping("/register")
-    public String register(@RequestParam String username,
-                           @RequestParam String password,
-                           HttpSession session,
-                           Model model) {
-        try {
-            User user = userService.register(username, password);
-            session.setAttribute("userId", user.getId());
-            session.setAttribute("username", user.getUsername());
-            return "redirect:/dashboard";
-        } catch (IllegalArgumentException e) {
-            model.addAttribute("error", e.getMessage());
-            return "register";
+        // 認証失敗なら401 Unauthorizedを返す
+        if (user == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body(new ApiResponse<>("401 Unauthorized", null));
         }
-    }
 
-    /**
-     * ログアウト処理。セッションを破棄し、ログイン画面へリダイレクトする
-     *
-     * @param session 現在の HTTP セッション
-     * @return login 画面へのリダイレクト
-     */
-    @GetMapping("/logout")
-    public String logout(HttpSession session) {
-        session.invalidate();
-        return "redirect:/login";
+        // 認証成功時はセッションにユーザー情報を保存
+        session.setAttribute("userId", user.getId());
+        session.setAttribute("username", user.getUsername());
+
+        // ユーザーエンティティからレスポンスDTOに変換
+        UserResponse response = UserResponse.fromEntity(user);
+
+        // 200 OKとともにユーザー情報を返す
+        return ResponseEntity.ok(new ApiResponse<>("200 OK", response));
     }
 }
