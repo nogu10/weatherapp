@@ -1,6 +1,7 @@
 package com.example.weatherapp.api;
 
 import com.example.weatherapp.model.Prefecture;
+import com.example.weatherapp.model.User;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -41,7 +42,7 @@ public class UserResponse {
      * @param user ユーザーエンティティ
      * @return UserResponseインスタンス
      */
-    public static UserResponse fromEntity(com.example.weatherapp.model.User user) {
+    public static UserResponse fromEntity(User user) {
         String formattedDate = user.getRegisterAt() != null ?
                 user.getRegisterAt().format(DateTimeFormatter.ISO_DATE_TIME) : null;
         return new UserResponse(user.getId(), user.getUsername(), formattedDate);

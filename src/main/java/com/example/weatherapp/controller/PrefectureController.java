@@ -1,62 +1,52 @@
 package com.example.weatherapp.controller;
 
-import com.example.weatherapp.enums.Prefecture;
-import com.example.weatherapp.model.User;
-import com.example.weatherapp.repository.UserRepository;
-import jakarta.servlet.http.HttpSession;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
+import com.example.weatherapp.api.ApiResponse;
+import com.example.weatherapp.api.PrefectureRequest;
+import com.example.weatherapp.api.PrefectureResponse;
+import com.example.weatherapp.service.WeatherService;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 /**
- * 都道府県の選択および変更を処理するコントローラークラス。
+ * 都道府県情報の登録・更新を担当するRESTコントローラー。
  */
-@Controller
+@RestController
 @RequestMapping("/prefecture")
 public class PrefectureController {
 
-    @Autowired
-    private UserRepository userRepository;
+    private final WeatherService weatherService;
 
-    /**
-     * 都道府県の選択画面を表示する。
-     *
-     * @param model   HTMLテンプレートへデータを渡すためのModel
-     * @param session ログイン中のユーザー情報を保持するHttpSession
-     * @return 都道府県選択画面のテンプレート名
-     */
-    @GetMapping
-    public String showPrefectureSelection(Model model, HttpSession session) {
-        String username = (String) session.getAttribute("username");
-        if (username == null) {
-            return "redirect:/login";
-        }
-        model.addAttribute("prefectures", Prefecture.values());
-        return "select-prefecture";
+    public PrefectureController(WeatherService weatherService) {
+        this.weatherService = weatherService;
     }
 
     /**
-     * ユーザーが選択した都道府県を保存する。
+     * 新規にユーザーの選択した都道府県を保存するPOSTエンドポイント。
      *
-     * @param prefecture 選択された都道府県（enum）
-     * @param session    ログイン中のユーザー情報
-     * @return ダッシュボード画面へリダイレクト
+     * @param request 都道府県保存用リクエストデータ
+     * @return 保存した都道府県情報を含むAPIレスポンス
      */
     @PostMapping
-    public String handleSelectPrefecture(@RequestParam("prefecture") Prefecture prefecture,
-                                         HttpSession session) {
-        String username = (String) session.getAttribute("username");
-        if (username == null) {
-            return "redirect:/login";
+    public ResponseEntity<ApiResponse<PrefectureResponse>> savePrefecture(@RequestBody PrefectureRequest request) {
+        PrefectureResponse response = weatherService.savePrefecture(request);
+        if (response == null) {
+            return ResponseEntity.status(400).body(new ApiResponse<>("400 Bad Request", null));
         }
+        return ResponseEntity.ok(new ApiResponse<>("200 OK", response));
+    }
 
-        User user = userRepository.findByUsername(username);
-        if (user != null) {
-            user.setPrefecture(prefecture);
-            userRepository.save(user);
+    /**
+     * 既存の都道府県情報を更新するPUTエンドポイント。
+     *
+     * @param request 都道府県更新用リクエストデータ
+     * @return 更新した都道府県情報を含むAPIレスポンス
+     */
+    @PutMapping
+    public ResponseEntity<ApiResponse<PrefectureResponse>> updatePrefecture(@RequestBody PrefectureRequest request) {
+        PrefectureResponse response = weatherService.updatePrefecture(request);
+        if (response == null) {
+            return ResponseEntity.status(400).body(new ApiResponse<>("400 Bad Request", null));
         }
-
-        return "redirect:/dashboard";
+        return ResponseEntity.ok(new ApiResponse<>("200 OK", response));
     }
 }
