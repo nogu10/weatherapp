@@ -1,17 +1,37 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html lang="ja">
 <head>
-    <meta charset="UTF-8" />
+    <meta charset="UTF-8">
     <title>ログイン</title>
 </head>
 <body>
-<h2>ログイン</h2>
-<form method="post" action="/login">
-    <input type="text" name="username" placeholder="ユーザー名" required />
-    <input type="password" name="password" placeholder="パスワード" required />
-    <button type="submit">ログイン</button>
-</form>
-<p th:text="${error}" style="color:red;"></p>
-<p><a href="/register">新規登録はこちら</a></p>
+    <h1>ログイン</h1>
+    <form id="loginForm">
+        <label>ユーザー名: <input type="text" id="username" required></label><br>
+        <label>パスワード: <input type="password" id="password" required></label><br>
+        <button type="submit">ログイン</button>
+    </form>
+    <p id="message"></p>
+
+    <script>
+        document.getElementById("loginForm").addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const username = document.getElementById("username").value;
+            const password = document.getElementById("password").value;
+
+            const resp = await fetch("/login", {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify({username, password})
+            });
+            const data = await resp.json();
+            if(resp.ok){
+                sessionStorage.setItem("userId", data.data.id);
+                window.location.href = "select-prefecture.html";
+            } else {
+                document.getElementById("message").textContent = data.status;
+            }
+        });
+    </script>
 </body>
 </html>

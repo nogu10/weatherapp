@@ -1,25 +1,14 @@
-package com.example.weatherapp.api;
+package com.example.weatherapp.dto;
 
 import lombok.Getter;
 import lombok.Setter;
 
 /**
- * ユーザー登録用のリクエストデータを表すクラス。
- * <p>
- * クライアントから送信される新規登録ユーザーのユーザー名とパスワードを保持します。
- * </p>
+ * ユーザー登録用リクエストDTO
  */
 @Getter
 @Setter
 public class RegisterRequest {
-
-    /**
-     * 登録するユーザー名
-     */
     private String username;
-
-    /**
-     * 登録するパスワード
-     */
     private String password;
 }

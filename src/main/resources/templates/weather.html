@@ -1,34 +1,32 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html lang="ja">
 <head>
-    <meta charset="UTF-8" />
-    <title>天気情報</title>
+    <meta charset="UTF-8">
+    <title>天気予報</title>
 </head>
 <body>
-    <h2 th:text="'天気情報 - ' + ${prefecture}"></h2>
+<h1>天気予報</h1>
+<p id="prefecture"></p>
+<p id="temperature"></p>
+<p id="weather"></p>
 
-    <div th:if="${weather != null}">
-        <p><strong>気温:</strong>
-            <span th:text="${weather['main']['temp']} + '℃'"></span>
-        </p>
-        <p><strong>天気:</strong>
-            <span th:text="${weather['weather'][0]['description']}"></span>
-        </p>
-        <p><strong>湿度:</strong>
-            <span th:text="${weather['main']['humidity']} + '%'"></span>
-        </p>
-        <p><strong>風速:</strong>
-            <span th:text="${weather['wind']['speed']} + ' m/s'"></span>
-        </p>
-    </div>
+<script>
+    async function loadWeather() {
+        const userId = sessionStorage.getItem("userId");
+        if(!userId) { window.location.href = "login.html"; return; }
 
-    <div th:if="${weather == null}">
-        <p>天気情報を取得できませんでした。</p>
-    </div>
+        const resp = await fetch("/dashboard/" + userId);
+        const data = await resp.json();
+        if(resp.ok){
+            document.getElementById("prefecture").textContent = "都道府県: " + data.data.label;
+            document.getElementById("temperature").textContent = "気温: " + data.data.temperature + " ℃";
+            document.getElementById("weather").textContent = "天気: " + data.data.weather;
+        } else {
+            document.getElementById("prefecture").textContent = data.status;
+        }
+    }
 
-    <hr>
-
-    <p><a href="/select-prefecture">都道府県を変更する</a></p>
-    <p><a href="/logout">ログアウト</a></p>
+    loadWeather();
+</script>
 </body>
 </html>
