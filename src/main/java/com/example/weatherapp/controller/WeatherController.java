@@ -1,35 +1,36 @@
 package com.example.weatherapp.controller;
 
-import com.example.weatherapp.api.ApiResponse;
-import com.example.weatherapp.api.PrefectureResponse;
+import com.example.weatherapp.dto.ApiResponse;
+import com.example.weatherapp.dto.PrefectureResponse;
 import com.example.weatherapp.service.WeatherService;
-import org.springframework.http.ResponseEntity;
+import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
 /**
- * ダッシュボード表示用の天気情報取得を担当するコントローラー。
- * GET /dashboard?userId={userId} で指定ユーザーの天気情報を取得
+ * 天気情報を取得するコントローラ
  */
 @RestController
+@RequestMapping("/api/weather")
+@RequiredArgsConstructor
 public class WeatherController {
 
     private final WeatherService weatherService;
 
-    public WeatherController(WeatherService weatherService) {
-        this.weatherService = weatherService;
-    }
-
     /**
-     * 指定ユーザーの登録都道府県の天気情報を取得するエンドポイント。
-     * @param userId ユーザーID（クエリパラメータ）
-     * @return 天気情報を含むAPIレスポンス
+     * ユーザーの選択した都道府県に基づいて
+     * 現在の天気情報を取得する
+     *
+     * @param userId ユーザーID
+     * @return 天気情報を含むレスポンス
      */
-    @GetMapping("/dashboard")
-    public ResponseEntity<ApiResponse<PrefectureResponse>> getDashboard(@RequestParam Long userId) {
-        PrefectureResponse prefectureData = weatherService.getDashboard(userId);
-        if (prefectureData == null) {
-            return ResponseEntity.status(404).body(new ApiResponse<>("404 Not Found", null));
+    @GetMapping("/dashboard/{userId}")
+    public ApiResponse<PrefectureResponse> getDashboard(@PathVariable Long userId) {
+        PrefectureResponse weather = weatherService.getDashboard(userId);
+
+        if (weather == null) {
+            return new ApiResponse<>("error", "天気情報を取得できませんでした", null);
         }
-        return ResponseEntity.ok(new ApiResponse<>("200 OK", prefectureData));
+
+        return new ApiResponse<>("success", "天気情報を取得しました", weather);
     }
 }

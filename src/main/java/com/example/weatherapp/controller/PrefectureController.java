@@ -27,7 +27,7 @@ public class PrefectureController {
      * @param request ユーザーIDと都道府県コード
      * @return 保存結果を返すAPIレスポンス
      */
-    @PostMapping("/weather")
+    @PostMapping("/prefecture")
     public ResponseEntity<ApiResponse<PrefectureResponse>> savePrefecture(@RequestBody PrefectureRequest request) {
         PrefectureResponse response = weatherService.savePrefecture(request);
         if (response == null) {
