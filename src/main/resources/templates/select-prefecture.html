@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>都道府県選択</title>
+</head>
+<body>
+<h1>都道府県を選択</h1>
+<select id="prefectureSelect">
+    <!-- 47都道府県をJSで追加 -->
+</select>
+<button id="savePrefecture">保存</button>
+<p id="message"></p>
+
+<script>
+    const prefectures = [
+        "北海道","青森","岩手","宮城","秋田","山形","福島",
+        "茨城","栃木","群馬","埼玉","千葉","東京","神奈川",
+        "新潟","富山","石川","福井","山梨","長野",
+        "岐阜","静岡","愛知","三重","滋賀","京都","大阪","兵庫","奈良","和歌山",
+        "鳥取","島根","岡山","広島","山口","徳島","香川","愛媛","高知",
+        "福岡","佐賀","長崎","熊本","大分","宮崎","鹿児島","沖縄"
+    ];
+
+    const select = document.getElementById("prefectureSelect");
+    prefectures.forEach((pref, i) => {
+        const option = document.createElement("option");
+        option.value = i + 1; // Prefecture code 1~47
+        option.textContent = pref;
+        select.appendChild(option);
+    });
+
+    document.getElementById("savePrefecture").addEventListener("click", async () => {
+        const userId = sessionStorage.getItem("userId");
+        const prefectureCode = select.value;
+
+        const resp = await fetch("/dashboard/prefecture", {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({userId: parseInt(userId), prefectureCode: parseInt(prefectureCode)})
+        });
+
+        const data = await resp.json();
+        if(resp.ok){
+            window.location.href = "weather.html";
+        } else {
+            document.getElementById("message").textContent = data.status;
+        }
+    });
+</script>
+</body>
+</html>

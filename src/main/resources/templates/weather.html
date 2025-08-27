@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>天気予報</title>
+</head>
+<body>
+<h1>天気予報</h1>
+<p id="prefecture"></p>
+<p id="temperature"></p>
+<p id="weather"></p>
+
+<script>
+    async function loadWeather() {
+        const userId = sessionStorage.getItem("userId");
+        if(!userId) { window.location.href = "login.html"; return; }
+
+        const resp = await fetch("/dashboard/" + userId);
+        const data = await resp.json();
+        if(resp.ok){
+            document.getElementById("prefecture").textContent = "都道府県: " + data.data.label;
+            document.getElementById("temperature").textContent = "気温: " + data.data.temperature + " ℃";
+            document.getElementById("weather").textContent = "天気: " + data.data.weather;
+        } else {
+            document.getElementById("prefecture").textContent = data.status;
+        }
+    }
+
+    loadWeather();
+</script>
+</body>
+</html>
