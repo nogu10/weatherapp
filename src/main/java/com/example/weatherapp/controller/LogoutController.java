@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.*;
  * バックエンド側はログアウト完了のレスポンスを返すのみ。
  */
 @RestController
-@RequestMapping("/api/logout")
+@RequestMapping("/logout")
 public class LogoutController {
 
     /**
